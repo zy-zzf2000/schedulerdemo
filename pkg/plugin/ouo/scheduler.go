@@ -51,7 +51,7 @@ func (n *CustomScheduler) PreFilter(ctx context.Context, state *framework.CycleS
 		分别使用两个Map对象NodeNetRequestMap和NodeNetCapacityMap存储所有节点的网络Request和Capacity
 		然后将这两个Map对象存储到CycleState中
 	*/
-	klog.V(3).Infof("prefilter pod: %v", p.Name)
+	klog.V(1).Infof("prefilter pod: %v\n", p.Name)
 	//获取所有节点的名称，初始化每个Node的Request和Capacity
 	nodeList, err := n.handle.SnapshotSharedLister().NodeInfos().List()
 	if err != nil {
@@ -96,6 +96,7 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 		3.计算节点运行该Pod后的CPU、内存、网络资源的剩余量
 		4.带入公式计算得分
 	*/
+	klog.V(1).Infof("score pod: %v,current node is %v\n", p.Name, nodeName)
 	var Cnet, Cmemory, Ccpu float64
 	var Rnet, Rmemory, Rcpu float64
 	var Tnet, Tmemory, Tcpu float64
@@ -152,6 +153,8 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 		((ECpu*n.resourceToWeightMap["cpu"]/Ccpu + Ememory*n.resourceToWeightMap["memory"]/Cmemory) + Enet*float64(n.resourceToWeightMap["net"])/Cnet)
 	scorePart2 := math.Abs(Ucpu/Ccpu-Umemory/Cmemory) + math.Abs(Ucpu/Ccpu-Unet/Cnet) + math.Abs(Unet/Cnet-Umemory/Cmemory)
 	finalScore := scorePart1 - scorePart2/3
+
+	klog.V(1).Infof("score pod: %v,current node is %v,final score is %v\n", p.Name, nodeName, finalScore)
 
 	return int64(finalScore), framework.NewStatus(framework.Success, "")
 }

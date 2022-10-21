@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"k8s.io/klog"
 )
 
 var PrometheusClient = InitClient()
@@ -54,5 +55,6 @@ func QueryNetUsageByNode(nodeName string) float64 {
 	//转换成Mb/s
 	sum = sum / 1024 / 1024
 	DPrinter("查询结果: %v\n", sum)
+	klog.V(1).Infof("%v 流量查询结果: %v\n", nodeName, sum)
 	return sum
 }
