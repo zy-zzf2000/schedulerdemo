@@ -6,6 +6,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -21,6 +22,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -43,6 +45,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -65,6 +68,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -80,6 +84,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -102,6 +107,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -124,6 +130,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -139,6 +146,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -161,6 +169,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -183,6 +192,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -198,6 +208,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -220,6 +231,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -242,6 +254,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -257,6 +270,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
@@ -279,6 +293,7 @@ metadata:
     podGroup: "pusheen"
     groupPriority: "100"
     minAvailable: "2"
+    netRequest: "20"
 spec:
   schedulerName: ouo-scheduler
   containers:
