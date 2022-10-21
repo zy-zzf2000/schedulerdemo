@@ -1,14 +1,15 @@
-module github.com/justin0u0/ouo-scheduler
+module ouo-scheduler
 
 go 1.14
 
 require (
+	github.com/justin0u0/ouo-scheduler v0.0.0-20200906085819-991fa47c0d0b
+	github.com/prometheus/client_golang v1.0.0
+	github.com/prometheus/common v0.4.1
 	github.com/spf13/cobra v1.0.0
 	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
-	k8s.io/client-go v0.17.3
 	k8s.io/component-base v0.17.3
-	k8s.io/klog v1.0.0
 	k8s.io/kubernetes v1.17.3
 )
 
