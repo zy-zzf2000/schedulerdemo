@@ -9,6 +9,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/klog"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
 )
 
@@ -24,12 +25,13 @@ type CustomScheduler struct {
 // Let the type CustomScheduler implement the QueueSortPlugin, PreFilterPlugin interface
 var _ framework.PreFilterPlugin = &CustomScheduler{}
 var _ framework.ScorePlugin = &CustomScheduler{}
+var _ framework.ScoreExtensions = &CustomScheduler{}
 
 type NetResourceMap struct {
 	mmap map[string]float64
 }
 
-//根据文档，Clone方法需要实现浅拷贝
+// 根据文档，Clone方法需要实现浅拷贝
 func (m *NetResourceMap) Clone() framework.StateData {
 	c := &NetResourceMap{
 		mmap: m.mmap,
@@ -49,7 +51,7 @@ func (n *CustomScheduler) PreFilter(ctx context.Context, state *framework.CycleS
 		分别使用两个Map对象NodeNetRequestMap和NodeNetCapacityMap存储所有节点的网络Request和Capacity
 		然后将这两个Map对象存储到CycleState中
 	*/
-
+	klog.V(3).Infof("prefilter pod: %v", p.Name)
 	//获取所有节点的名称，初始化每个Node的Request和Capacity
 	nodeList, err := n.handle.SnapshotSharedLister().NodeInfos().List()
 	if err != nil {
@@ -154,6 +156,35 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 	return int64(finalScore), framework.NewStatus(framework.Success, "")
 }
 
+func (pl *CustomScheduler) NormalizeScore(ctx context.Context, state *framework.CycleState, p *v1.Pod, scores framework.NodeScoreList) *framework.Status {
+	var (
+		highest int64 = 0
+		lowest        = scores[0].Score
+	)
+	klog.Infoln("--------->", scores)
+	for _, nodeScore := range scores {
+		klog.Infoln("highest for:--------->", highest)
+		klog.Infoln("lowest for:--------->", lowest)
+		if nodeScore.Score < lowest {
+			lowest = nodeScore.Score
+		}
+		if nodeScore.Score > highest {
+			highest = nodeScore.Score
+		}
+	}
+	klog.Infoln("highest:--------->", highest)
+	klog.Infoln("lowest:--------->", lowest)
+	if highest == lowest {
+		lowest--
+	}
+
+	for i, nodeScore := range scores {
+		scores[i].Score = (nodeScore.Score - lowest) * framework.MaxNodeScore / (highest - lowest)
+		klog.Infof("node: %v, final Score: %v", scores[i].Name, scores[i].Score)
+	}
+	return framework.NewStatus(framework.Success, "")
+}
+
 func (n *CustomScheduler) ScoreExtensions() framework.ScoreExtensions {
 	return nil
 }
@@ -162,7 +193,12 @@ func (n *CustomScheduler) ScoreExtensions() framework.ScoreExtensions {
 // New() is type PluginFactory = func(configuration runtime.Object, f v1alpha1.FrameworkHandle) (v1alpha1.Plugin, error)
 // mentioned in https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/framework/runtime/registry.go
 func New(_ *runtime.Unknown, handle framework.FrameworkHandle) (framework.Plugin, error) {
-	return &CustomScheduler{
-		handle: handle,
-	}, nil
+	plugin := &CustomScheduler{}
+	plugin.handle = handle
+	plugin.resourceToWeightMap = map[string]float64{
+		"cpu":    1,
+		"memory": 1,
+		"net":    1,
+	}
+	return plugin, nil
 }

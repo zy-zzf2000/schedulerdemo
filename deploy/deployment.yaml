@@ -13,10 +13,10 @@ data:
       lockObjectName: ouo-scheduler
       lockObjectNamespace: kube-system
     plugins:
-      queueSort:
+      preFilter:
         enabled:
         - name: "ouo-scheduler"
-      preFilter:
+      score:
         enabled:
         - name: "ouo-scheduler"
     pluginConfig:
@@ -48,7 +48,7 @@ spec:
           name: scheduler-config
       containers:
       - name: ouo-scheduler-pod
-        image: justin0u0/ouo-scheduler:9bedc1b
+        image: zyzzf/netbalanceplugin:v6.2
         imagePullPolicy: IfNotPresent
         args:
         - ouo-scheduler
