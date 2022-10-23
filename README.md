@@ -1,13 +1,13 @@
-# ouo-scheduler
-Custom kubernetes scheduler demo using kube-scheduler framework plugin.
+> 集成了prometheus的自定义K8S scheduler，主要参考了这里的实现：https://github.com/justin0u0/ouo-scheduler
 
-Implement *QueueSort Plugin* and *PreFilter Plugin*.
+# 用法
 
-# Usage
-
-1. Build Docker image
+1. 构造docker镜像
   ```
   make image
   ```
-2. Change `spec.image` inside `deploy/deployment.yaml`
-3. `kubectl apply -f deploy/.`
+2. 更改`deployments/k8s-scheduler.yaml`中的`image`为你构造的镜像
+3. 部署
+  ```
+  kubectl apply -f deployments/k8s-scheduler.yaml
+  ```
