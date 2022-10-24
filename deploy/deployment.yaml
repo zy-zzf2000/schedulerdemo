@@ -48,7 +48,7 @@ spec:
           name: scheduler-config
       containers:
       - name: ouo-scheduler-pod
-        image: zyzzf/netbalanceplugin:v6.2
+        image: zyzzf/netbalanceplugin:v6.4
         imagePullPolicy: IfNotPresent
         args:
         - ouo-scheduler

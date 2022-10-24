@@ -51,7 +51,7 @@ func (n *CustomScheduler) PreFilter(ctx context.Context, state *framework.CycleS
 		分别使用两个Map对象NodeNetRequestMap和NodeNetCapacityMap存储所有节点的网络Request和Capacity
 		然后将这两个Map对象存储到CycleState中
 	*/
-	klog.V(1).Infof("prefilter pod: %v\n", p.Name)
+	klog.V(1).Infof("enter prefilter pod: %v\n", p.Name)
 	//获取所有节点的名称，初始化每个Node的Request和Capacity
 	nodeList, err := n.handle.SnapshotSharedLister().NodeInfos().List()
 	if err != nil {
@@ -203,5 +203,6 @@ func New(_ *runtime.Unknown, handle framework.FrameworkHandle) (framework.Plugin
 		"memory": 1,
 		"net":    1,
 	}
+	klog.Info("CustomScheduler plugin is created!\n")
 	return plugin, nil
 }
