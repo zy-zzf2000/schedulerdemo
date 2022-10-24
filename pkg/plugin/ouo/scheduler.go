@@ -162,6 +162,8 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 
 	klog.V(1).Infof("score pod: %v,current node is %v,final score is %v\n", p.Name, nodeName, finalScore)
 
+	finalScore *= 100000000
+	klog.V(1).Infof("score pod: %v,current node is %v,final score is %v\n", p.Name, nodeName, finalScore)
 	return int64(finalScore), framework.NewStatus(framework.Success, "")
 }
 
@@ -189,13 +191,13 @@ func (pl *CustomScheduler) NormalizeScore(ctx context.Context, state *framework.
 
 	for i, nodeScore := range scores {
 		scores[i].Score = (nodeScore.Score - lowest) * framework.MaxNodeScore / (highest - lowest)
-		klog.Infof("node: %v, final Score: %v", scores[i].Name, scores[i].Score)
+		klog.Infof("node: %v, 经过归一化后的 final Score为: %v", scores[i].Name, scores[i].Score)
 	}
 	return framework.NewStatus(framework.Success, "")
 }
 
 func (n *CustomScheduler) ScoreExtensions() framework.ScoreExtensions {
-	return nil
+	return n
 }
 
 // New ... Create an scheduler instance
