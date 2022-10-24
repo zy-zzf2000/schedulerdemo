@@ -14,9 +14,10 @@ import (
 
 var PrometheusClient = InitClient()
 var NodeIP = map[string]string{
-	"node1": "116.56.140.23",
-	"node2": "116.56.140.108",
-	"node3": "116.56.140.131",
+	"node1":  "116.56.140.23",
+	"node2":  "116.56.140.108",
+	"node3":  "116.56.140.131",
+	"master": "116.56.140.105",
 }
 
 func InitClient() api.Client {
@@ -36,6 +37,7 @@ func QueryNetUsageByNode(nodeName string) float64 {
 	//创建一个上下文，用于取消或超时
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	DPrinter("正在执行node %v 的网络使用率查询,该node的ip为%v\n", nodeName, NodeIP[nodeName])
 	querystr := fmt.Sprintf("irate(node_network_transmit_bytes_total{instance=~\"%v.*\"}[60m]) > 0", NodeIP[nodeName])
 	DPrinter("执行PromQL:" + querystr + "\n")
 	result, warnings, err := v1api.Query(ctx, querystr, time.Now())

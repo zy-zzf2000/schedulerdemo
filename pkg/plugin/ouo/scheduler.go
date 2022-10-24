@@ -148,6 +148,12 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 	Ememory := Cmemory - Tmemory
 	Enet := Cnet - Tnet
 
+	//将C、R、U、T输出到日志中
+	klog.V(1).Infof("Ccpu: %v,Cmemory: %v,Cnet: %v\n", Ccpu, Cmemory, Cnet)
+	klog.V(1).Infof("Rcpu: %v,Rmemory: %v,Rnet: %v\n", Rcpu, Rmemory, Rnet)
+	klog.V(1).Infof("Ucpu: %v,Umemory: %v,Unet: %v\n", Ucpu, Umemory, Unet)
+	klog.V(1).Infof("Tcpu: %v,Tmemory: %v,Tnet: %v\n", Tcpu, Tmemory, Tnet)
+
 	//带入公式计算得分
 	scorePart1 := (1 / (n.resourceToWeightMap["cpu"] + n.resourceToWeightMap["memory"] + n.resourceToWeightMap["net"])) *
 		((ECpu*n.resourceToWeightMap["cpu"]/Ccpu + Ememory*n.resourceToWeightMap["memory"]/Cmemory) + Enet*float64(n.resourceToWeightMap["net"])/Cnet)
