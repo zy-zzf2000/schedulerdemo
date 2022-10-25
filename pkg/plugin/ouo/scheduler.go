@@ -3,6 +3,7 @@ package ouo
 import (
 	"context"
 	"ouo-scheduler/pkg/plugin/util"
+	"strings"
 
 	"strconv"
 
@@ -19,6 +20,7 @@ const Name = "ouo-scheduler"
 type CustomScheduler struct {
 	handle              framework.FrameworkHandle
 	resourceToWeightMap map[string]float64 //存放CPU、内存与网络权重的map
+	cpuCoreNum          map[string]float64 //存放每个CPU核数的map
 }
 
 // Let the type CustomScheduler implement the QueueSortPlugin, PreFilterPlugin interface
@@ -110,14 +112,15 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 		return 0, framework.NewStatus(framework.Error, err.Error())
 	}
 	Cnet = capacityMap.(*NetResourceMap).mmap[nodeName]
-	Ccpu = float64(node.Node().Status.Capacity.Cpu().Value())
+	Ccpu = n.cpuCoreNum[nodeName] * 1000
 	Cmemory = float64(node.Node().Status.Capacity.Memory().Value())
 
 	//获取节点CPU、内存、网络资源的已经被使用的数目
-	cpuAllocatable := float64(node.Node().Status.Allocatable.Cpu().Value())
+	//klog.V(1).Infof("node %v 的CPU资源总量为%v,其中可用的为%v\n", nodeName, node.Node().Status.Capacity.Cpu().String(), node.Node().Status.Allocatable.Cpu().String())
+	//cpuAllocatable := float64(node.Node().Status.Allocatable.Cpu().Value())
 	memoryAllocatable := float64(node.Node().Status.Allocatable.Memory().Value())
 
-	Ucpu = Ccpu - cpuAllocatable
+	Ucpu = util.QueryCpuUsageByNode(nodeName) * Ccpu //注意这里prometheus查询的是CPU的占用率，而不是CPU的使用量
 	Umemory = Cmemory - memoryAllocatable
 	Unet = util.QueryNetUsageByNode(nodeName)
 
@@ -128,9 +131,11 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 	Rmemory = 0
 	Rnet = 0
 	for i := 0; i < containerNum; i++ {
-		klog.V(1).Infof("container %v 获取到的原始（转为float之前） cpu request 是 %v\n", i, p.Spec.Containers[i].Resources.Requests.Cpu().Value())
-		klog.V(1).Infof("container %v 获取到的原始（转为float之前） memory request 是 %v\n", i, p.Spec.Containers[i].Resources.Requests.Memory().Value())
-		Rcpu += float64(p.Spec.Containers[i].Resources.Requests.Cpu().Value())
+		klog.V(1).Infof("pod %v 的 container %v 获取到的原始（转为float之前） cpu request 是 %v\n", p.Name, i, p.Spec.Containers[i].Resources.Requests.Cpu().String())
+		klog.V(1).Infof("pod %v 的 container %v 获取到的原始（转为float之前） memory request 是 %v\n", p.Name, i, p.Spec.Containers[i].Resources.Requests.Memory().Value())
+		cpuRequest, _ := strconv.ParseFloat(strings.Replace(p.Spec.Containers[i].Resources.Requests.Cpu().String(), "m", "", 1), 64)
+		klog.V(1).Infof("pod %v 的 container %v 获取到的转为float之后的 cpu request 是 %v\n", p.Name, i, cpuRequest)
+		Rcpu += cpuRequest
 		Rmemory += float64(p.Spec.Containers[i].Resources.Requests.Memory().Value())
 		net, err := strconv.ParseFloat((p.Labels["netRequest"]), 64)
 		if err != nil {
@@ -148,8 +153,13 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 	// ECpu := Ccpu - Tcpu
 	// Ememory := Cmemory - Tmemory
 	// Enet := Cnet - Tnet
+	//输出归一化之前的C、R、U
+	klog.V(1).Infof("现在输出归一化之前的C、R、U\n")
+	klog.V(1).Infof("Ccpu: %v,Cmemory: %v,Cnet: %v\n", Ccpu, Cmemory, Cnet)
+	klog.V(1).Infof("Rcpu: %v,Rmemory: %v,Rnet: %v\n", Rcpu, Rmemory, Rnet)
+	klog.V(1).Infof("Ucpu: %v,Umemory: %v,Unet: %v\n", Ucpu, Umemory, Unet)
 
-	//TODO：将C、R、U、T归一化到[0,100]之间
+	//TODO：将C、R、U、T归一化到[0,100]之间(Done)
 	Rcpu = Rcpu / Ccpu * 100
 	Rmemory = Rmemory / Cmemory * 100
 	Rnet = Rnet / Cnet * 100
@@ -164,6 +174,7 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 	U := (Ucpu + Umemory + Unet) / 3
 
 	//将C、R、U输出到日志中
+	klog.V(1).Infof("现在输出归一化之后的C、R、U\n")
 	klog.V(1).Infof("Ccpu: %v,Cmemory: %v,Cnet: %v\n", Ccpu, Cmemory, Cnet)
 	klog.V(1).Infof("Rcpu: %v,Rmemory: %v,Rnet: %v\n", Rcpu, Rmemory, Rnet)
 	klog.V(1).Infof("Ucpu: %v,Umemory: %v,Unet: %v\n", Ucpu, Umemory, Unet)
@@ -225,6 +236,12 @@ func New(_ *runtime.Unknown, handle framework.FrameworkHandle) (framework.Plugin
 		"cpu":    1,
 		"memory": 1,
 		"net":    1,
+	}
+	plugin.cpuCoreNum = map[string]float64{
+		"master": 8,
+		"node1":  8,
+		"node2":  10,
+		"node3":  12,
 	}
 	klog.Info("CustomScheduler plugin is created!\n")
 	return plugin, nil

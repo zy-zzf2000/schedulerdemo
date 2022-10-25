@@ -60,3 +60,33 @@ func QueryNetUsageByNode(nodeName string) float64 {
 	klog.V(1).Infof("%v 流量查询结果: %v\n", nodeName, sum)
 	return sum
 }
+
+func QueryCpuUsageByNode(nodeName string) float64 {
+	//首先根据client获取v1的api
+	v1api := v1.NewAPI(PrometheusClient)
+	//创建一个上下文，用于取消或超时
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	DPrinter("正在执行node %v 的CPU使用率查询,该node的ip为%v\n", nodeName, NodeIP[nodeName])
+	//1-avg(irate(node_cpu_seconds_total{mode="idle",instance=~"116.56.140.105.*"}[30m])) by (instance)
+	querystr := fmt.Sprintf("1-avg(irate(node_cpu_seconds_total{mode=\"idle\",instance=~\"%v.*\"}[30m])) by (instance)", NodeIP[nodeName])
+	DPrinter("执行PromQL:" + querystr + "\n")
+	result, warnings, err := v1api.Query(ctx, querystr, time.Now())
+	if err != nil {
+		fmt.Printf("Error querying Prometheus: %v\n", err)
+		os.Exit(1)
+	}
+	if len(warnings) > 0 {
+		fmt.Printf("Warnings: %v\n", warnings)
+	}
+	//累加所有的值
+	var sum float64
+	resultVec := result.(model.Vector)
+	for i := 0; i < resultVec.Len(); i++ {
+		sum += float64(resultVec[i].Value)
+	}
+	DPrinter("查询结果: %v\n", sum)
+	klog.V(1).Infof("%v CPU查询结果: %v\n", nodeName, sum)
+	return sum
+
+}
