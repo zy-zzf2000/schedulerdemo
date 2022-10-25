@@ -122,11 +122,14 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 	Unet = util.QueryNetUsageByNode(nodeName)
 
 	//获取当前pod的CPU、内存、网络资源的申请数目
+	//FIXME:各个pod的CPU、内存请求数目获取似乎有问题,参考这里：https://github.com/prodanlabs/scheduler-framework/blob/main/pkg/plugins.go 66行
 	containerNum := len(p.Spec.Containers)
 	Rcpu = 0
 	Rmemory = 0
 	Rnet = 0
 	for i := 0; i < containerNum; i++ {
+		klog.V(1).Infof("container %v 获取到的原始（转为float之前） cpu request 是 %v\n", i, p.Spec.Containers[i].Resources.Requests.Cpu().Value())
+		klog.V(1).Infof("container %v 获取到的原始（转为float之前） memory request 是 %v\n", i, p.Spec.Containers[i].Resources.Requests.Memory().Value())
 		Rcpu += float64(p.Spec.Containers[i].Resources.Requests.Cpu().Value())
 		Rmemory += float64(p.Spec.Containers[i].Resources.Requests.Memory().Value())
 		net, err := strconv.ParseFloat((p.Labels["netRequest"]), 64)
