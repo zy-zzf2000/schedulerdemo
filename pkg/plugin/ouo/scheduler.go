@@ -2,7 +2,6 @@ package ouo
 
 import (
 	"context"
-	"math"
 	"ouo-scheduler/pkg/plugin/util"
 
 	"strconv"
@@ -99,7 +98,6 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 	klog.V(1).Infof("score pod: %v,current node is %v\n", p.Name, nodeName)
 	var Cnet, Cmemory, Ccpu float64
 	var Rnet, Rmemory, Rcpu float64
-	var Tnet, Tmemory, Tcpu float64
 	var Unet, Umemory, Ucpu float64
 	//获取节点CPU、内存、网络资源的Capacity
 	node, err := n.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
@@ -139,25 +137,39 @@ func (n *CustomScheduler) Score(ctx context.Context, state *framework.CycleState
 	}
 
 	//计算节点运行该Pod后的CPU、内存、网络资源的使用量
-	Tcpu = Ucpu + Rcpu
-	Tmemory = Umemory + Rmemory
-	Tnet = Unet + Rnet
+	// Tcpu = Ucpu + Rcpu
+	// Tmemory = Umemory + Rmemory
+	// Tnet = Unet + Rnet
 
 	//计算节点运行该Pod后的CPU、内存、网络资源的剩余量
-	ECpu := Ccpu - Tcpu
-	Ememory := Cmemory - Tmemory
-	Enet := Cnet - Tnet
+	// ECpu := Ccpu - Tcpu
+	// Ememory := Cmemory - Tmemory
+	// Enet := Cnet - Tnet
 
-	//将C、R、U、T输出到日志中
+	//TODO：将C、R、U、T归一化到[0,100]之间
+	Rcpu = Rcpu / Ccpu * 100
+	Rmemory = Rmemory / Cmemory * 100
+	Rnet = Rnet / Cnet * 100
+	Ucpu = Ucpu / Ccpu * 100
+	Umemory = Umemory / Cmemory * 100
+	Unet = Unet / Cnet * 100
+	Ccpu = 100
+	Cmemory = 100
+	Cnet = 100
+
+	//计算资源平均使用数
+	U := (Ucpu + Umemory + Unet) / 3
+
+	//将C、R、U输出到日志中
 	klog.V(1).Infof("Ccpu: %v,Cmemory: %v,Cnet: %v\n", Ccpu, Cmemory, Cnet)
 	klog.V(1).Infof("Rcpu: %v,Rmemory: %v,Rnet: %v\n", Rcpu, Rmemory, Rnet)
 	klog.V(1).Infof("Ucpu: %v,Umemory: %v,Unet: %v\n", Ucpu, Umemory, Unet)
-	klog.V(1).Infof("Tcpu: %v,Tmemory: %v,Tnet: %v\n", Tcpu, Tmemory, Tnet)
+	// klog.V(1).Infof("Tcpu: %v,Tmemory: %v,Tnet: %v\n", Tcpu, Tmemory, Tnet)
 
 	//带入公式计算得分
 	scorePart1 := (1 / (n.resourceToWeightMap["cpu"] + n.resourceToWeightMap["memory"] + n.resourceToWeightMap["net"])) *
-		((ECpu*n.resourceToWeightMap["cpu"]/Ccpu + Ememory*n.resourceToWeightMap["memory"]/Cmemory) + Enet*float64(n.resourceToWeightMap["net"])/Cnet)
-	scorePart2 := math.Abs(Ucpu/Ccpu-Umemory/Cmemory) + math.Abs(Ucpu/Ccpu-Unet/Cnet) + math.Abs(Unet/Cnet-Umemory/Cmemory)
+		(3 - (Rcpu*n.resourceToWeightMap["cpu"]/(Ccpu-Ucpu) + Rmemory*n.resourceToWeightMap["memory"]/(Cmemory-Umemory) + Rnet*float64(n.resourceToWeightMap["net"])/(Cnet-Unet)))
+	scorePart2 := (Ucpu-U)*(Ucpu-U) + (Umemory-U)*(Umemory-U) + (Unet-U)*(Unet-U)
 	finalScore := scorePart1 - scorePart2/3
 
 	klog.V(1).Infof("score pod: %v,current node is %v,final score is %v\n", p.Name, nodeName, finalScore)
